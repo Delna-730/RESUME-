@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="AI Resume Roaster — Get your resume brutally analyzed, ATS-scored, and hilariously roasted by AI." />
+  <title>🔥 AI Resume Roaster — Get Burned, Get Better</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+</head>
+<body>
+
+  <!-- Background orbs -->
+  <div class="bg-orbs" aria-hidden="true">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="container header-inner">
+      <div class="logo">
+        <span class="logo-icon">🔥</span>
+        <span class="logo-text">Resume<span class="logo-accent">Roaster</span></span>
+      </div>
+      <nav class="nav">
+        <a href="#how-it-works" class="nav-link">How It Works</a>
+        <button class="btn-settings" id="settingsBtn" title="Settings" aria-label="Settings">⚙️</button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Settings Drawer -->
+  <div class="settings-overlay" id="settingsOverlay"></div>
+  <aside class="settings-panel" id="settingsPanel" aria-hidden="true">
+    <div class="settings-inner">
+      <div class="settings-header">
+        <h3>⚙️ Settings</h3>
+        <button class="btn-close-settings" id="closeSettings">✕</button>
+      </div>
+      <label class="settings-label">Hugging Face API Key</label>
+      <input type="password" id="hfApiKey" class="settings-input" placeholder="hf_..." autocomplete="off" />
+      <small class="settings-hint">Used for AI-powered roasting. <a href="https://huggingface.co/settings/tokens" target="_blank" rel="noopener">Get a free key →</a></small>
+      <label class="settings-label" style="margin-top:16px">AI Model</label>
+      <select id="hfModel" class="settings-input">
+        <option value="mistralai/Mistral-7B-Instruct-v0.2" selected>Mistral 7B (Recommended)</option>
+        <option value="HuggingFaceH4/zephyr-7b-beta">Zephyr 7B</option>
+        <option value="tiiuae/falcon-7b-instruct">Falcon 7B</option>
+      </select>
+      <button class="btn-save-settings" id="saveSettings">💾 Save Settings</button>
+    </div>
+  </aside>
+
+  <!-- HERO / UPLOAD -->
+  <section class="hero" id="upload">
+    <div class="container hero-inner">
+      <div class="hero-badge">🤖 AI-Powered Analysis</div>
+      <h1 class="hero-title">Get Your Resume<br /><span class="gradient-text">Roasted &amp; Perfected</span></h1>
+      <p class="hero-subtitle">Upload your resume and our AI will score ATS compatibility, detect your skills, check grammar, and deliver brutally honest (and hilarious) roast feedback.</p>
+
+      <!-- Upload Area -->
+      <div class="upload-area" id="uploadArea">
+        <div class="upload-content" id="uploadContent">
+          <div class="upload-icon-wrap"><span class="upload-icon">📄</span></div>
+          <h3 class="upload-title">Drop your resume here</h3>
+          <p class="upload-sub">PDF or DOCX &nbsp;·&nbsp; Max 5 MB</p>
+          <button class="btn-choose" id="uploadBtn">Choose File</button>
+          <input type="file" id="fileInput" accept=".pdf,.docx" style="display:none" />
+        </div>
+        <div class="upload-file-info" id="fileInfo" style="display:none">
+          <span class="file-icon-badge">📎</span>
+          <div class="file-meta">
+            <span class="file-name" id="fileName">resume.pdf</span>
+            <span class="file-size" id="fileSize">0 KB</span>
+          </div>
+          <button class="btn-remove" id="removeFile" title="Remove file">✕</button>
+        </div>
+      </div>
+
+      <!-- Field Selector -->
+      <div class="field-selector">
+        <p class="field-label">🎯 Select Your Professional Field</p>
+        <div class="field-grid" id="fieldGrid">
+          <button class="field-btn active" data-field="auto">🤖 Auto-Detect</button>
+          <button class="field-btn" data-field="tech">💻 Software / IT</button>
+          <button class="field-btn" data-field="engineering">⚙️ Engineering</button>
+          <button class="field-btn" data-field="medical">🏥 Medical</button>
+          <button class="field-btn" data-field="aviation">✈️ Aviation</button>
+          <button class="field-btn" data-field="business">💼 Business</button>
+          <button class="field-btn" data-field="law">⚖️ Law / Legal</button>
+          <button class="field-btn" data-field="education">📚 Education</button>
+          <button class="field-btn" data-field="marketing">📱 Marketing</button>
+          <button class="field-btn" data-field="science">🔬 Science</button>
+        </div>
+      </div>
+
+      <!-- Experience Level -->
+      <div class="field-selector" style="margin-top:8px">
+        <p class="field-label">📊 Experience Level</p>
+        <div class="field-grid" id="expGrid">
+          <button class="field-btn exp-btn active" data-exp="fresher">👶 Fresher</button>
+          <button class="field-btn exp-btn" data-exp="entry">🌱 Entry (0–2 yrs)</button>
+          <button class="field-btn exp-btn" data-exp="mid">🚀 Mid-Level (2–5 yrs)</button>
+          <button class="field-btn exp-btn" data-exp="experienced">💼 Experienced (5–10 yrs)</button>
+          <button class="field-btn exp-btn" data-exp="senior">🏆 Senior (10+ yrs)</button>
+        </div>
+      </div>
+
+      <button class="btn-roast" id="roastBtn" disabled>
+        <span class="btn-roast-label">🔥 Roast My Resume!</span>
+      </button>
+
+      <div class="error-banner" id="errorBanner" style="display:none"></div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section class="section-hiw" id="how-it-works">
+    <div class="container">
+      <h2 class="section-title">How It Works</h2>
+      <div class="steps-grid">
+        <div class="step-card"><div class="step-num">01</div><div class="step-emoji">📤</div><h3>Upload Resume</h3><p>Drop your PDF or DOCX file</p></div>
+        <div class="step-card"><div class="step-num">02</div><div class="step-emoji">🔍</div><h3>AI Analysis</h3><p>Our engine extracts and analyzes every detail</p></div>
+        <div class="step-card"><div class="step-num">03</div><div class="step-emoji">📊</div><h3>Get Scored</h3><p>ATS score, skill detection, grammar check</p></div>
+        <div class="step-card"><div class="step-num">04</div><div class="step-emoji">🔥</div><h3>Get Roasted</h3><p>Brutal, funny, and genuinely helpful feedback</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- LOADING -->
+  <section class="loading-section" id="loadingSection" style="display:none">
+    <div class="container">
+      <div class="loading-card">
+        <div class="loading-flame">🔥</div>
+        <h2 class="loading-title">Analyzing Your Resume…</h2>
+        <div class="loading-steps" id="loadingSteps">
+          <div class="lstep" id="step-parse"><div class="lstep-dot"></div><span>Extracting resume text</span></div>
+          <div class="lstep" id="step-skills"><div class="lstep-dot"></div><span>Detecting skills &amp; keywords</span></div>
+          <div class="lstep" id="step-ats"><div class="lstep-dot"></div><span>Calculating ATS score</span></div>
+          <div class="lstep" id="step-grammar"><div class="lstep-dot"></div><span>Checking grammar &amp; quality</span></div>
+          <div class="lstep" id="step-roast"><div class="lstep-dot"></div><span>Generating roast comments 🔥</span></div>
+        </div>
+        <div class="loading-bar-wrap"><div class="loading-bar" id="loadingBar" style="width:0%"></div></div>
+        <p class="loading-tip" id="loadingTip">Hang tight — the AI is judging you…</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- RESULTS -->
+  <section class="results-section" id="resultsSection" style="display:none">
+    <div class="container">
+      <div class="results-header">
+        <h2 class="results-title">📋 Your Resume Report</h2>
+        <div class="results-actions">
+          <button class="btn-secondary" id="analyzeAnother">↩ Upload Another</button>
+          <button class="btn-primary" id="copyReport">📋 Copy Report</button>
+        </div>
+      </div>
+
+      <!-- Score overview -->
+      <div class="score-overview">
+        <div class="score-ring-wrap">
+          <svg class="score-ring" viewBox="0 0 200 200" width="180" height="180" aria-label="ATS Score Ring">
+            <circle class="ring-bg" cx="100" cy="100" r="80" fill="none" stroke-width="14"/>
+            <circle class="ring-fg" id="scoreRing" cx="100" cy="100" r="80" fill="none" stroke-width="14"
+              stroke-linecap="round" stroke-dasharray="502.65" stroke-dashoffset="502.65"
+              transform="rotate(-90 100 100)"/>
+          </svg>
+          <div class="score-center">
+            <span class="score-number" id="scoreNumber">0</span>
+            <span class="score-lbl">ATS Score</span>
+          </div>
+        </div>
+        <div class="score-right">
+          <div class="score-verdict" id="scoreVerdict"></div>
+          <div class="breakdown-list" id="breakdownItems"></div>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tabs" role="tablist">
+        <button class="tab active" data-tab="skills" role="tab" aria-selected="true">🛠️ Skills</button>
+        <button class="tab" data-tab="ats" role="tab" aria-selected="false">📊 ATS</button>
+        <button class="tab" data-tab="grammar" role="tab" aria-selected="false">✍️ Grammar</button>
+        <button class="tab" data-tab="roast" role="tab" aria-selected="false">🔥 Roast</button>
+        <button class="tab" data-tab="tips" role="tab" aria-selected="false">💡 Tips</button>
+      </div>
+
+      <div class="tab-panels">
+        <div class="tab-panel active" id="panel-skills" role="tabpanel">
+          <div id="skillsTechGroup" class="skills-group"><h3>💻 Technical Skills Detected</h3><div class="tag-row" id="tagsTech"></div></div>
+          <div id="skillsSoftGroup" class="skills-group"><h3>🤝 Soft Skills Detected</h3><div class="tag-row" id="tagsSoft"></div></div>
+          <div id="skillsMissingGroup" class="skills-group"><h3>❌ Commonly Expected (Missing)</h3><div class="tag-row" id="tagsMissing"></div></div>
+        </div>
+        <div class="tab-panel" id="panel-ats" role="tabpanel"><div id="atsContent"></div></div>
+        <div class="tab-panel" id="panel-grammar" role="tabpanel"><div id="grammarContent"></div></div>
+        <div class="tab-panel" id="panel-roast" role="tabpanel">
+          <div class="roast-warning">⚠️ Brace yourself. This is going to hurt — but it'll help.</div>
+          <div id="roastContent"></div>
+        </div>
+        <div class="tab-panel" id="panel-tips" role="tabpanel"><div id="tipsContent"></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <p>🔥 AI Resume Roaster &nbsp;·&nbsp; Powered by Hugging Face</p>
+      <p class="footer-sub">Your resume is processed in your browser and never stored on any server.</p>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
