@@ -277,11 +277,25 @@ const SOFT_SKILLS_ALL = ['leadership','communication','teamwork','problem solvin
 function detectDomain(text) {
   const lower = text.toLowerCase();
   const scores = {};
+  
   for (const [key, data] of Object.entries(DOMAIN_DATA)) {
-    scores[key] = data.skills.filter(s => lower.includes(s)).length;
+    // Use word boundaries \b to avoid matching letters inside words
+    // e.g. "R" shouldn't match "ready", "MD" shouldn't match "modern"
+    let count = 0;
+    data.skills.forEach(skill => {
+      const escaped = skill.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // Escape regex chars
+      const regex = new RegExp(`\\b${escaped}\\b`, 'gi');
+      const matches = text.match(regex);
+      if (matches) count += matches.length;
+    });
+    scores[key] = count;
   }
-  const top = Object.entries(scores).sort(([,a],[,b]) => b-a)[0];
-  return (top && top[1] > 0) ? top[0] : 'tech';
+
+  const sorted = Object.entries(scores).sort(([,a],[,b]) => b-a);
+  const [topKey, topScore] = sorted[0];
+
+  // If no clear winner or very low confidence, default to 'tech' but try to be smart
+  return (topScore > 1) ? topKey : 'tech';
 }
 
 // ── Skill Analysis (domain-aware) ─────────────
@@ -501,6 +515,27 @@ const DOMAIN_ROASTS = {
                 '"Strong analytical skills" — then why does this resume not pass basic formatting analysis?']
 };
 
+const DOMAIN_TIPS = {
+  tech:        ['Add your GitHub link — recruiters want to see real code, not just claims.',
+                'List specific frameworks and versions (e.g., React 18, Node 20).'],
+  engineering: ['Include specific project outcomes with measurable results (e.g., reduced material cost by 15%).',
+                'List your relevant certifications (PE, PMP, Six Sigma belt).'],
+  medical:     ['Include clinical hours, rotations, and departments worked in.',
+                'Mention specific EMR/EHR systems you\'ve used (Epic, Cerner, etc.).'],
+  aviation:    ['List total flight hours, aircraft types, and ratings clearly near the top.',
+                'Include your license number and issuing authority (FAA/DGCA/EASA).'],
+  business:    ['Quantify every achievement: revenue generated, costs cut, % growth.',
+                'List ERP and financial software you\'ve used (SAP, Oracle, QuickBooks).'],
+  law:         ['Mention specific cases handled (by type, not name) and their outcomes.',
+                'List bar affiliations, practice areas, and jurisdictions clearly.'],
+  education:   ['List specific subjects taught, grade levels, and student outcomes.',
+                'Include any curriculum development or e-learning tools you\'ve used.'],
+  marketing:   ['Add campaign ROI numbers, follower growth %, and ad spend managed.',
+                'List specific platforms and tools (HubSpot, Google Ads, Meta Business Suite).'],
+  science:     ['List publications, conferences, and grants with proper citations.',
+                'Include specific lab techniques, instruments, and software used.']
+};
+
 function offlineRoast(ats, skills, grammar) {
   const score  = ats.totalScore;
   const domain = skills.domain || 'tech';
@@ -508,55 +543,51 @@ function offlineRoast(ats, skills, grammar) {
   const roasts = [];
   const tips   = [];
 
-  // Score roast
+  const pickRand = arr => arr[Math.floor(Math.random() * arr.length)];
+
+  // 1. Score-based Roast
   if (score < 35)  roasts.push('This resume scores lower than a blank page — at least a blank page saves the recruiter\'s time.');
   else if (score < 55) roasts.push('Your ATS score is so average it could file its own taxes as "head of household: mediocrity."');
   else if (score < 75) roasts.push('Not bad — your resume is like a participation trophy. You showed up, but nobody\'s framing it.');
   else roasts.push('Solid score! Your resume is the overachiever of the class — still, let\'s find those edges to sharpen.');
 
-  // Experience-level roasts
-  const er = EXP_ROASTS[exp] || EXP_ROASTS.fresher;
-  roasts.push(er[0]);
+  // 2. Experience & Domain Roast (Randomized)
+  roasts.push(pickRand(EXP_ROASTS[exp] || EXP_ROASTS.fresher));
+  roasts.push(pickRand(DOMAIN_ROASTS[domain] || DOMAIN_ROASTS.tech));
 
-  // Domain-specific roasts
-  const dr = DOMAIN_ROASTS[domain] || DOMAIN_ROASTS.tech;
-  roasts.push(dr[0]);
+  // 3. Issue-based Roasts & Tips
+  const weak = grammar.issues.find(i => i.title === 'Weak phrasing');
+  if (weak) {
+    roasts.push(`"${weak.desc.split('"')[1]}" — were you responsible for it, or did you just watch it happen from across the office?`);
+    tips.push('Swap weak phrases like "Responsible for" with high-impact verbs: Architected, Orchestrated, or Spearheaded.');
+  }
 
-  // Skill roasts
-  if (skills.tech.length < 3) roasts.push(`You have fewer ${skills.domainLabel || 'domain'} skills listed than a student intern. Even the intern has a LinkedIn.`);
-
-  // Grammar roasts
-  if (grammar.issues.some(i => i.title.includes('Weak phrasing')))
-    roasts.push('"Responsible for" — were you responsible for it, or did you just watch it happen from across the office?');
-  if (grammar.issues.some(i => i.title.includes('quantifiable')))
+  const metrics = grammar.issues.find(i => i.title.includes('quantifiable'));
+  if (metrics) {
     roasts.push('No numbers anywhere. "Improved things" — improved them from what, chaos to mild disorder?');
+    tips.push('Quantify your impact: Use percentages (%), dollar amounts ($), or time saved to prove your value.');
+  }
 
-  // Domain-specific tips
-  const DOMAIN_TIPS = {
-    tech:        ['Add your GitHub link — recruiters want to see real code, not just claims.',
-                  'List specific frameworks and versions (e.g., React 18, Node 20).'],
-    engineering: ['Include specific project outcomes with measurable results (e.g., reduced material cost by 15%).',
-                  'List your relevant certifications (PE, PMP, Six Sigma belt).'],
-    medical:     ['Include clinical hours, rotations, and departments worked in.',
-                  'Mention specific EMR/EHR systems you\'ve used (Epic, Cerner, etc.).'],
-    aviation:    ['List total flight hours, aircraft types, and ratings clearly near the top.',
-                  'Include your license number and issuing authority (FAA/DGCA/EASA).'],
-    business:    ['Quantify every achievement: revenue generated, costs cut, % growth.',
-                  'List ERP and financial software you\'ve used (SAP, Oracle, QuickBooks).'],
-    law:         ['Mention specific cases handled (by type, not name) and their outcomes.',
-                  'List bar affiliations, practice areas, and jurisdictions clearly.'],
-    education:   ['List specific subjects taught, grade levels, and student outcomes.',
-                  'Include any curriculum development or e-learning tools you\'ve used.'],
-    marketing:   ['Add campaign ROI numbers, follower growth %, and ad spend managed.',
-                  'List specific platforms and tools (HubSpot, Google Ads, Meta Business Suite).'],
-    science:     ['List publications, conferences, and grants with proper citations.',
-                  'Include specific lab techniques, instruments, and software used.']
-  };
-  // Experience-level tips first (most relevant)
-  tips.push(...(EXP_TIPS[exp] || EXP_TIPS.fresher).slice(0,2));
-  // Then domain tips
-  tips.push(...(DOMAIN_TIPS[domain] || DOMAIN_TIPS.tech).slice(0,2));
-  tips.push('Tailor resume keywords to each job description for better ATS ranking.');
+  const length = grammar.issues.find(i => i.title.includes('too short') || i.title.includes('too long'));
+  if (length) {
+    tips.push(length.desc);
+  }
+
+  // 4. Fill remaining Tips from Libraries (Randomized)
+  const expTips = (EXP_TIPS[exp] || EXP_TIPS.fresher).filter(t => !tips.includes(t));
+  while (tips.length < 3 && expTips.length > 0) {
+    const t = expTips.splice(Math.floor(Math.random() * expTips.length), 1)[0];
+    tips.push(t);
+  }
+
+  const domainTips = (DOMAIN_TIPS[domain] || DOMAIN_TIPS.tech).filter(t => !tips.includes(t));
+  while (tips.length < 5 && domainTips.length > 0) {
+    const t = domainTips.splice(Math.floor(Math.random() * domainTips.length), 1)[0];
+    tips.push(t);
+  }
+
+  // 5. General Fallback Tip
+  if (tips.length < 5) tips.push('Tailor resume keywords to each specific job description to beat the ATS filters.');
 
   return { roasts: roasts.slice(0,5), tips: tips.slice(0,5), source: 'offline' };
 }
