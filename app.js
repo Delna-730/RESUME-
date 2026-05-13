@@ -3,7 +3,7 @@
 // ================================================
 
 const CONFIG = {
-  HF_TOKEN: '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',
+  HF_TOKEN: "",
   HF_MODEL: 'mistralai/Mistral-7B-Instruct-v0.2',
   MAX_SIZE:  5 * 1024 * 1024
 };
