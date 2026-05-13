@@ -143,9 +143,11 @@ async function runAnalysis() {
     setStep('skills','active');
     const selectedDomain = document.querySelector('.field-btn:not(.exp-btn).active')?.dataset.field || 'auto';
     const expLevel = document.querySelector('.exp-btn.active')?.dataset.exp || 'fresher';
+    const manualRole = document.getElementById('targetRole')?.value.trim() || '';
     const domain = selectedDomain === 'auto' ? detectDomain(resumeText) : selectedDomain;
     const skills = analyzeSkills(resumeText, domain);
     skills.expLevel = expLevel;
+    skills.targetRole = manualRole;
     setStep('skills','done'); setProgress(40);
 
     setStep('ats','active');
@@ -389,9 +391,10 @@ async function generateRoast(text, ats, skills, grammar) {
   try {
     const snippet  = text.slice(0, 1200).replace(/\s+/g,' ');
     const field    = skills.domainLabel || 'Professional';
+    const target   = skills.targetRole ? `specifically for a ${skills.targetRole} role` : `in the ${field} industry`;
     const expLabel = skills.expLevel ? EXP_META[skills.expLevel]?.label || skills.expLevel : 'Professional';
     const tone     = EXP_META[skills.expLevel]?.tone || 'balanced';
-    const prompt   = `<s>[INST] You are a savage but helpful AI resume roaster specializing in ${field} resumes for ${expLabel} candidates. Roast tone should be ${tone}. Given the resume snippet below, write EXACTLY 5 numbered roast comments and then 5 improvement tips tailored for a ${expLabel} in ${field}. Format: first "ROASTS:" then list 1-5, then "TIPS:" then list 1-5. Keep each roast under 2 sentences. Resume:\n\n${snippet} [/INST]`;
+    const prompt   = `<s>[INST] You are a savage but helpful AI resume roaster specializing in ${field} resumes for ${expLabel} candidates. Roast tone should be ${tone}. The candidate is applying ${target}. Given the resume snippet below, write EXACTLY 5 numbered roast comments and then 5 improvement tips. Format: first "ROASTS:" then list 1-5, then "TIPS:" then list 1-5. Keep each roast under 2 sentences. Resume:\n\n${snippet} [/INST]`;
 
     const res = await fetch(`https://api-inference.huggingface.co/models/${CONFIG.HF_MODEL}`, {
       method: 'POST',
@@ -666,14 +669,20 @@ function renderSkills(skills) {
   make('tagsSoft',    skills.soft,    'tag-soft');
   make('tagsMissing', skills.missing, 'tag-missing');
 
-  // Show detected domain + exp badges in results
+  // Show detected domain + exp + target role badges in results
   const existingBadge = document.getElementById('domainBadge');
   if (existingBadge) existingBadge.remove();
   const expMeta = EXP_META[skills.expLevel] || {};
   const badge = document.createElement('div');
   badge.id = 'domainBadge';
   badge.className = 'domain-badge';
-  badge.innerHTML = `${skills.domainIcon} <strong>${skills.domainLabel}</strong>&nbsp;&nbsp;·&nbsp;&nbsp;${expMeta.label || skills.expLevel || 'Fresher'}`;
+  
+  let badgeHTML = `${skills.domainIcon} <strong>${skills.domainLabel}</strong>&nbsp;&nbsp;·&nbsp;&nbsp;${expMeta.label || skills.expLevel || 'Fresher'}`;
+  if (skills.targetRole) {
+    badgeHTML += `&nbsp;&nbsp;·&nbsp;&nbsp;🎯 <strong>${skills.targetRole}</strong>`;
+  }
+  
+  badge.innerHTML = badgeHTML;
   document.querySelector('.results-title').insertAdjacentElement('afterend', badge);
 }
 
@@ -761,6 +770,7 @@ function resetUI() {
   setProgress(0);
   ['parse','skills','ats','grammar','roast'].forEach(s => setStep(s,''));
   document.getElementById('loadingTip').textContent = 'Hang tight — the AI is judging you…';
+  document.getElementById('targetRole').value = '';
   tipIdx = 0;
   switchTab('skills');
 }

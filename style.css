@@ -423,3 +423,20 @@ a:hover { text-decoration: underline; }
 }
 .domain-badge strong { color: var(--text); }
 
+/* ---- Modern Input ---- */
+.input-group-modern { width: 100%; max-width: 560px; }
+.modern-input {
+  width: 100%; padding: 12px 18px; border-radius: 12px;
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--text); font-family: inherit; font-size: 0.9rem;
+  transition: all .3s; outline: none;
+}
+.modern-input:focus {
+  border-color: var(--purple);
+  background: rgba(124, 58, 237, 0.05);
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15);
+}
+.modern-input::placeholder { color: var(--text-muted); opacity: 0.6; }
+
+
+
