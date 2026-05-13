@@ -2,8 +2,9 @@
 
 An AI-powered resume analysis tool that provides brutal (but helpful) feedback, ATS scoring, and technical audits. Built with a premium dark-mode interface and integrated with the Hugging Face Inference API.
 
-![Version](https://img.shields.io/badge/version-1.0.0-purple)
-![License](https://img.shields.io/badge/license-MIT-blue)
+
+## 🌐 Live Demo
+**[Try the AI Resume Roaster Live!]([https://your-deployment-link-here.com)](https://resumeroaster-delta.vercel.app/)**
 
 ## 🚀 Overview
 
